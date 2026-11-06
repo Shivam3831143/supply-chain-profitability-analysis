@@ -8,7 +8,7 @@ import streamlit as st
 # Project root directory
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-# Dataset location
+# Local dataset location
 DATA_PATH = PROJECT_ROOT / "dataset" / "APL_Logistics_dataset.csv"
 
 
@@ -18,12 +18,20 @@ def load_data():
     Load and prepare the supply chain dataset.
     """
 
-    if not DATA_PATH.exists():
-        raise FileNotFoundError(
-            f"Dataset not found at: {DATA_PATH}"
-        )
+    # Load dataset from Streamlit Secrets when deployed
+    if "data" in st.secrets:
+        csv_url = st.secrets["data"]["csv_url"]
+        df = pd.read_csv(csv_url)
 
-    df = pd.read_csv(DATA_PATH)
+    # Otherwise, load local dataset
+    elif DATA_PATH.exists():
+        df = pd.read_csv(DATA_PATH)
+
+    else:
+        raise FileNotFoundError(
+            "Dataset not found. Configure the dataset source "
+            "in Streamlit Secrets or add the CSV locally."
+        )
 
     # Create Net Revenue column
     df["Net Revenue"] = df["Order Item Total"]
