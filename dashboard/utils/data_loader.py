@@ -1,42 +1,31 @@
 
 from pathlib import Path
-
 import pandas as pd
 import streamlit as st
 
-
-# Project root directory
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-# Local dataset location
+# Original dataset (used locally)
 DATA_PATH = PROJECT_ROOT / "dataset" / "APL_Logistics_dataset.csv"
+
+# Synthetic dataset (used when deploying)
+DEMO_DATA_PATH = PROJECT_ROOT / "deployment" / "demo_dataset.csv"
 
 
 @st.cache_data
 def load_data():
-    """
-    Load and prepare the supply chain dataset.
-    """
 
-    # Load dataset from Streamlit Secrets when deployed
-    if "data" in st.secrets:
-        csv_url = st.secrets["data"]["csv_url"]
-        df = pd.read_csv(csv_url)
-
-    # Otherwise, load local dataset
-    elif DATA_PATH.exists():
+    if DATA_PATH.exists():
         df = pd.read_csv(DATA_PATH)
 
-    else:
-        raise FileNotFoundError(
-            "Dataset not found. Configure the dataset source "
-            "in Streamlit Secrets or add the CSV locally."
-        )
+    elif DEMO_DATA_PATH.exists():
+        df = pd.read_csv(DEMO_DATA_PATH)
 
-    # Create Net Revenue column
+    else:
+        raise FileNotFoundError("No dataset found.")
+
     df["Net Revenue"] = df["Order Item Total"]
 
-    # Create Profit Status column
     df["Profit Status"] = df["Benefit per order"].apply(
         lambda x: (
             "Profitable" if x > 0
